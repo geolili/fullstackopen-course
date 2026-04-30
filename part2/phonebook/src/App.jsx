@@ -2,7 +2,7 @@ import { useState, useEffect, deleteConfirmation} from 'react'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
-import personsService from './components/services/persons'
+import personsService from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
