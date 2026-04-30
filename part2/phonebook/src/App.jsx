@@ -1,18 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect, deleteConfirmation} from 'react'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import personsService from './components/services/persons'
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ]) 
+  const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchName, setSearchName] = useState('')
+
+  useEffect(() => {
+    personsService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)      
+    })
+  }, [])
 
   const handleNameChange = (event) => {
     console.log(event.target.value)
@@ -42,22 +46,52 @@ const App = () => {
       return
     }
 
-    const alreadyExist = persons.find((person) => person.name.toLowerCase() === newName.toLowerCase())
-
-    if(alreadyExist) {
-      alert(`${newName} is already added to phonebook`)
-      return
-    }
-
     const nameObject = {
       name: newName,
       number: newNumber
     }
 
-    setPersons(persons.concat(nameObject))
-    setNewName('')
-    setNewNumber('')
-    setSearchName('')
+    const alreadyExist = persons.find((person) => person.name.toLowerCase() === newName.toLowerCase())
+
+    if(alreadyExist) {
+      //* exercise doing it for fun not for grade
+      //alert(`${newName} is already added to phonebook`)
+      //return
+      if (window.confirm(`${newName} is already added to the phonebook, replace the old number with a new one?`)) {
+
+        personsService.update(alreadyExist.id, nameObject)
+        .then(() => {
+          return personsService.getAll()
+        })
+        .then(data => {
+          setPersons(data)
+          setNewName('')
+          setNewNumber('')
+          setSearchName('')
+        })
+      }
+    } else {
+      personsService
+      .create(nameObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))        
+        setNewName('')
+        setNewNumber('')
+        setSearchName('')
+      })
+    }
+  }
+
+  const handleDeletePerson = (person) => {
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personsService.deletePerson(person.id)
+      .then(() => {
+        return personsService.getAll()
+      })
+      .then(data => {
+        setPersons(data)
+      })
+    }
   }
 
   return (
@@ -67,15 +101,13 @@ const App = () => {
         searchName={searchName} 
         onSearchChange={handleSearchChange} 
       />
+
       <h3>Add a new:</h3>
       <PersonForm newName={newName} newNumber={newNumber} handleNameChange={handleNameChange} handleNumChange={handleNumChange} addName={addName} />
 
       <h2>Numbers</h2>
-
-      <Persons persons={persons} searchName={searchName} />
-      
+      <Persons persons={persons} searchName={searchName} handleDeletePerson={handleDeletePerson} />
     </div>
-    
   )
 }
 
