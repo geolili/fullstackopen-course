@@ -23,6 +23,18 @@ const App = () => {
     }
   }, [value])
 
+  const handleClick = (countryName) => {
+    axios
+      .get(`https://studies.cs.helsinki.fi/restcountries/api/name/${countryName}`)
+      .then(response => {
+          setCountries([response.data])
+          console.log(response.data.name.common)
+      })
+      .catch(error => {
+        console.log(error)
+      })
+  }
+
   return (
     <div>
       <form>
@@ -31,7 +43,10 @@ const App = () => {
       {countries.length > 10 && <p>Too many matches, specify another filter</p>}
       {countries.length <= 10 && countries.length > 1 && <pre>
         {countries.map((country) => (
-          <p key={country.cca3}>{country.name.common}</p>
+          <div key={country.cca3}>
+            <span >{country.name.common}</span>
+            <button style={{marginLeft: '10px'}} type="button" onClick={() => handleClick(country.name.common)}>Show</button>
+          </div>
         ))}
       </pre>}
       {countries.length === 1 && <pre>
@@ -46,7 +61,7 @@ const App = () => {
                 <li key={code}>{language}</li>
               ))}
             </ul>
-            <img src={country.flags.png} alt={country.flags.alt} />
+            <img style={{border: '1px solid black'}} src={country.flags.png} alt={country.flags.alt} />
           </div>
         ))}
         </pre>}
