@@ -4,6 +4,9 @@ import axios from 'axios'
 const App = () => {
   const [value, setValue] = useState('')
   const [countries, setCountries] = useState([])
+  const [meteo, setMeteo] = useState({})
+
+  //to refactor in more components like phonebook
 
   useEffect(() => {
     if (value.trim() !== "") {
@@ -18,21 +21,35 @@ const App = () => {
           )
           setCountries(filtered)
         })
+        .catch(error => {
+          console.log(error)
+        })
     } else {
       setCountries([])
     }
   }, [value])
 
-  const handleClick = (countryName) => {
-    axios
-      .get(`https://studies.cs.helsinki.fi/restcountries/api/name/${countryName}`)
-      .then(response => {
-          setCountries([response.data])
-          console.log(response.data.name.common)
-      })
-      .catch(error => {
-        console.log(error)
-      })
+  const handleClick =  async (countryName) => {
+    try {
+      const api_key = import.meta.env.VITE_SOME_KEY
+
+      const responseCountry = await axios
+        .get(`https://studies.cs.helsinki.fi/restcountries/api/name/${countryName}`)
+
+      const country = responseCountry.data
+      setCountries([country])
+
+      const capital = country.capital[0]
+      console.log(capital)
+
+      const weatherRes = await axios
+        .get(`https://api.openweathermap.org/data/2.5/weather?q=${capital}&appid=${api_key}&units=metric`)
+
+      setMeteo(weatherRes.data)
+
+    } catch (error) {
+      console.log("Something went wrong:", error)
+    }
   }
 
   return (
@@ -62,6 +79,10 @@ const App = () => {
               ))}
             </ul>
             <img style={{border: '1px solid black'}} src={country.flags.png} alt={country.flags.alt} />
+            <h1>Weather in {country.capital}</h1>
+            <p>Temperature: {meteo.main.temp} C°</p>
+            <img src={`https://openweathermap.org/payload/api/media/file/${meteo.weather[0].icon}.png`} />
+            <p>Wind: {meteo.wind.speed} m/s</p>
           </div>
         ))}
         </pre>}
