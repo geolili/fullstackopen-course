@@ -3,12 +3,15 @@ import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
 import personsService from './services/persons'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchName, setSearchName] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     personsService
@@ -68,6 +71,13 @@ const App = () => {
           setNewName('')
           setNewNumber('')
           setSearchName('')
+          setMessage(`${newName} successfully updated`)
+        })
+        .catch(error => { //tested with server down
+          setError(true)
+          setMessage(
+            `Something went wrong: ${error}`
+          )
         })
       }
     } else {
@@ -78,6 +88,13 @@ const App = () => {
         setNewName('')
         setNewNumber('')
         setSearchName('')
+        setMessage(`${newName} successfully added`)
+      })
+      .catch(error => { //tested with server down
+        setError(true)
+        setMessage(
+          `Something went wrong: ${error}`
+        )
       })
     }
   }
@@ -90,6 +107,13 @@ const App = () => {
       })
       .then(data => {
         setPersons(data)
+        setMessage(`${person.name} successfully deleted`)
+      })
+      .catch(error => {
+        setError(true)
+        setMessage(
+          `Information of '${person.name}' has already been removed from server`
+        )
       })
     }
   }
@@ -97,6 +121,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} setMessage={setMessage} error={error}/>
       <Filter 
         searchName={searchName} 
         onSearchChange={handleSearchChange} 
