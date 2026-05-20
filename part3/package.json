@@ -1,0 +1,23 @@
+{
+  "name": "part3",
+  "version": "1.0.0",
+  "description": "phonebook",
+  "keywords": [
+    "fullstackopen",
+    "backend",
+    "phonebook",
+    "part3"
+  ],
+  "license": "ISC",
+  "author": "a.villes",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
