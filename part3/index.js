@@ -3,9 +3,13 @@ const app = express()
 const morgan = require('morgan')
 
 app.use(express.json())
-app.use(morgan('tiny'));
+app.use(morgan('tiny'))
 
 morgan.token('body', (req) => {
+    if (!req.body) {
+    return '{}'
+  }
+  
   return JSON.stringify({
     name: req.body.name,
     number: req.body.number
@@ -13,6 +17,7 @@ morgan.token('body', (req) => {
 })
 
 app.use(
+  '/api/persons',
   morgan(':method :url :status :response-time ms :body')
 )
 
@@ -89,6 +94,7 @@ const generateId = () => {
 app.post('/api/persons', (request, response) => {
   const body = request.body
   const alreadyExist = persons.find((person) => person.name.toLowerCase() === body.name?.toLowerCase())
+
 
   if (!body.name || !body.number) {
     return response.status(400).json({ 
