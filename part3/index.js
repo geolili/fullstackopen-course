@@ -1,6 +1,12 @@
+require('dotenv').config()
+
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
+const Person = require('./models/person')
+
+const password = process.argv[2]
+const url = `mongodb+srv://geolilimongoatlas_db_user:${password}@cluster0.eh3maxz.mongodb.net/phonebook?appName=Cluster0`
 
 app.use(express.json())
 app.use(morgan('tiny'))
@@ -22,7 +28,7 @@ app.use(
   morgan(':method :url :status :response-time ms :body')
 )
 
-let persons = [
+/*let persons = [
     { 
       "id": "1",
       "name": "Arto Hellas", 
@@ -48,53 +54,56 @@ let persons = [
       "name": "Mary Todelete", 
       "number": "39-23-0000000"
     }
-]
+]*/
 
-app.get('/', (request, response) => {
+/*app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
-})
+})*/
 
 app.get('/info', (request, response) => {
-    const number = persons.length;
-    const date = new Date();
-  response.send(`
-     <p>Phonebook has info for ${number} people </p>
-     <p>${date}</p>
-    `)
+  Person.find({})
+    .then(persons => {
+      const number = persons.length
+      const date = new Date()
+
+      response.send(`
+        <p>Phonebook has info for ${number} people</p>
+        <p>${date}</p>
+      `)
+    })
+    .catch(error => {
+      response.status(500).json({ error: 'database error' })
+    })
 })
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then(result => {
+    response.json(result)
+  })
 })
 
 app.get('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  const person = persons.find(p => p.id === id)
-
-  if (person) {
+  Person.findById(request.params.id).then(person => {
     response.json(person)
-  } else {
-    response.status(404).end()
-  }
+  })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  persons = persons.filter(p => p.id !== id)
-
-  response.status(204).end()
+  Person.findByIdAndDelete(request.params.id).then(person => {
+    response.json(person)
+  })
 })
 
-const generateId = () => {
+/*const generateId = () => {
   const maxId = persons.length > 0
     ? Math.max(...persons.map(n => Number(n.id)))
     : 0
   return String(maxId + 1)
-}
+}*/
 
 app.post('/api/persons', (request, response) => {
   const body = request.body
-  const alreadyExist = persons.find((person) => person.name.toLowerCase() === body.name?.toLowerCase())
+  //const alreadyExist = persons.find((person) => person.name.toLowerCase() === body.name?.toLowerCase())
 
 
   if (!body.name || !body.number) {
@@ -103,24 +112,23 @@ app.post('/api/persons', (request, response) => {
     })
   }
 
-  if(alreadyExist) {
+  /*if(alreadyExist) {
     return response.status(400).json({ 
       error: 'name must be unique'
     })
-  }
+  }*/
 
-  const person = {
-    name: body.name,
-    number: body.number,
-    id: generateId(),
-  }
-
-  persons = persons.concat(person)
-
-  response.json(person)
+  const person = new Person({
+      name: body.name,
+      number: body.number,
+  })
+  
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
