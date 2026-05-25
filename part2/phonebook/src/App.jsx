@@ -76,7 +76,7 @@ const App = () => {
         .catch(error => { //tested with server down
           setError(true)
           setMessage(
-            `Something went wrong: ${error}`
+            `Something went wrong: ${error.response.data.error}` //changed a name on db to a 2 caracters long to test
           )
         })
       }
@@ -93,7 +93,7 @@ const App = () => {
       .catch(error => { //tested with server down
         setError(true)
         setMessage(
-          `Something went wrong: ${error}`
+          `Something went wrong: ${error.response.data.error}`
         )
       })
     }
