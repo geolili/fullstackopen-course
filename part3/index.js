@@ -5,15 +5,12 @@ const app = express()
 const morgan = require('morgan')
 const Person = require('./models/person')
 
-const password = process.argv[2]
-const url = `mongodb+srv://geolilimongoatlas_db_user:${password}@cluster0.eh3maxz.mongodb.net/phonebook?appName=Cluster0`
-
 app.use(express.json())
 app.use(morgan('tiny'))
 app.use(express.static('dist'))
 
 morgan.token('body', (req) => {
-    if (!req.body) {
+  if (!req.body) {
     return '{}'
   }
 
@@ -28,7 +25,7 @@ app.use(
   morgan(':method :url :status :response-time ms :body')
 )
 
-app.get('/info', (request, response) => {
+app.get('/info', (request, response, next) => {
   Person.find({})
     .then(persons => {
       const number = persons.length
@@ -49,14 +46,14 @@ app.get('/api/persons', (request, response, next) => {
 
 app.get('/api/persons/:id', (request, response, next) => {
   Person.findById(request.params.id)
-  .then(person => {
-    if(person) {
-      response.json(person)
-    } else {
-      response.status(404).end()
-    }
-  })
-  .catch(error => next(error))
+    .then(person => {
+      if(person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -77,16 +74,16 @@ app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
   if (!body.name || !body.number) {
-    return response.status(400).json({ 
-      error: 'name or number missing' 
+    return response.status(400).json({
+      error: 'name or number missing'
     })
   }
 
   const person = new Person({
-      name: body.name,
-      number: body.number,
+    name: body.name,
+    number: body.number,
   })
-  
+
   person.save().then(savedPerson => {
     response.json(savedPerson)
   }).catch(error => next(error))
@@ -124,7 +121,7 @@ const errorHandler = (error, request, response, next) => {
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
-    return response.status(400).json({ error: error.message })  
+    return response.status(400).json({ error: error.message })
   }
   next(error)
 }
