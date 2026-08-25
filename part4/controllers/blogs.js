@@ -11,16 +11,11 @@ blogsRouter.get('/:id', async (req, res) => {
   blog ? res.json(blog) : res.status(404).end()
 })
 
-blogsRouter.post('/', async (req, res) => {
-  const body = req.body
+blogsRouter.post('/', async (request, response) => {
+  const blog = new Blog(request.body)
 
-  if (!body.title || !body.author || !body.url || !body.likes) {
-    return res.status(400).json({ error: 'incomplete data' })
-  }
-
-  const blog = new Blog(body)
-  const saved = await blog.save()
-  res.json(saved)
+  const savedBlog = await blog.save()
+  response.status(201).json(savedBlog)
 })
 
 blogsRouter.delete('/:id', async (req, res) => {
