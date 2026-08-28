@@ -9,7 +9,7 @@ import Togglable from './components/Togglable'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
-  const [username, setUsername] = useState('') 
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
   const [title, setTitle] = useState('')
@@ -38,7 +38,7 @@ const App = () => {
 
   const handleLogin = async event => {
     event.preventDefault()
-    
+
     try {
       const user = await loginService.login({ username, password })
       window.localStorage.setItem(
@@ -49,76 +49,34 @@ const App = () => {
       setUsername('')
       setPassword('')
     } catch {
-        setError(true)
-        setMessage(
-        `wrong username or password`
+      setError(true)
+      setMessage(
+        'wrong username or password'
       )
       setTimeout(() => {
         setError(false)
       }, 5000)
-    }  
-}
-
-const handleLogout = () => {
-  window.localStorage.removeItem('loggedNoteappUser')
-  setUser(null)
-  blogService.setToken(null)
-}
-
-const handleBlogSubmit = async (event) => {
-  event.preventDefault()
-
-  try {
-    const newBlog = await blogService.create({ title, author, url })
-    setBlogs(blogs.concat(newBlog))
-    setTitle('')
-    setAuthor('')
-    setUrl('')
-    setMessage(`${title} by ${author} added`)
-  } catch (error) {
-    console.error('Error creating blog:', error)
-    setError(true)
-    setMessage(
-      `Something went wrong: ${error}`
-    )
-    setTimeout(() => {
-      setError(false)
-    }, 5000)
-  }
-}
-
-const handleLike = async (id) => {
-  const blogToUpdate = blogs.find(blog => blog.id === id)
-    
-  const updatedBlog = { 
-    title: blogToUpdate.title,
-    author: blogToUpdate.author,
-    url: blogToUpdate.url,
-    likes: blogToUpdate.likes + 1, 
-    user: blogToUpdate.user?.id || blogToUpdate.user?._id || blogToUpdate.user 
-  }
-
-  try {
-    const returnedBlog = await blogService.update(id, updatedBlog)
-      setBlogs(blogs.map(blog => blog.id !== id ? blog : returnedBlog))
-    } catch (error) {
-      console.error('Error updating blog:', error)
-      setError(true)
-      setMessage(`Something went wrong: ${error}`)
-      setTimeout(() => setError(false), 5000)
     }
-}
+  }
 
-const handleDelete = async (id) => {
-  const blogToDelete = blogs.find(blog => blog.id === id)
+  const handleLogout = () => {
+    window.localStorage.removeItem('loggedNoteappUser')
+    setUser(null)
+    blogService.setToken(null)
+  }
 
-  if (window.confirm(`Are you sure you want to delete ${blogToDelete.title} by ${blogToDelete.author}?`)) {
+  const handleBlogSubmit = async (event) => {
+    event.preventDefault()
+
     try {
-      await blogService.remove(id)
-      setBlogs(blogs.filter(blog => blog.id !== id))
-      setMessage(`${blogToDelete.title} by ${blogToDelete.author} deleted`)
+      const newBlog = await blogService.create({ title, author, url })
+      setBlogs(blogs.concat(newBlog))
+      setTitle('')
+      setAuthor('')
+      setUrl('')
+      setMessage(`${title} by ${author} added`)
     } catch (error) {
-      console.error('Error deleting blog:', error)
+      console.error('Error creating blog:', error)
       setError(true)
       setMessage(
         `Something went wrong: ${error}`
@@ -128,9 +86,51 @@ const handleDelete = async (id) => {
       }, 5000)
     }
   }
-}
 
-const loginForm = () => (
+  const handleLike = async (id) => {
+    const blogToUpdate = blogs.find(blog => blog.id === id)
+
+    const updatedBlog = {
+      title: blogToUpdate.title,
+      author: blogToUpdate.author,
+      url: blogToUpdate.url,
+      likes: blogToUpdate.likes + 1,
+      user: blogToUpdate.user?.id || blogToUpdate.user?._id || blogToUpdate.user
+    }
+
+    try {
+      const returnedBlog = await blogService.update(id, updatedBlog)
+      setBlogs(blogs.map(blog => blog.id !== id ? blog : returnedBlog))
+    } catch (error) {
+      console.error('Error updating blog:', error)
+      setError(true)
+      setMessage(`Something went wrong: ${error}`)
+      setTimeout(() => setError(false), 5000)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    const blogToDelete = blogs.find(blog => blog.id === id)
+
+    if (window.confirm(`Are you sure you want to delete ${blogToDelete.title} by ${blogToDelete.author}?`)) {
+      try {
+        await blogService.remove(id)
+        setBlogs(blogs.filter(blog => blog.id !== id))
+        setMessage(`${blogToDelete.title} by ${blogToDelete.author} deleted`)
+      } catch (error) {
+        console.error('Error deleting blog:', error)
+        setError(true)
+        setMessage(
+          `Something went wrong: ${error}`
+        )
+        setTimeout(() => {
+          setError(false)
+        }, 5000)
+      }
+    }
+  }
+
+  const loginForm = () => (
     <form onSubmit={handleLogin}>
       <div>
         <label>
@@ -160,7 +160,7 @@ const loginForm = () => (
     <div>
       <Notification message={message} setMessage={setMessage} error={error}/>
       {!user && loginForm()}
-      
+
       {user && <><p>{user.name} logged in</p><button onClick={() => handleLogout()}>logout</button></>}
       {user && <Togglable buttonLabel="create blog" hideLabel="cancel">
         <h2>Blogs</h2>

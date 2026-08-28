@@ -7,14 +7,14 @@ const setToken = newToken => {
 }
 
 const getAll = () => {
-    if (!token) {
+  if (!token) {
     return Promise.reject(new Error('Unauthorized: No token provided. Please log in to obtain a valid token.'))
   }
-  
+
   const request = axios.get(baseUrl, {
     headers: { Authorization: token }
   })
-  
+
   return request.then(response => response.data)
 }
 
@@ -22,12 +22,12 @@ const create = async newObject => {
   if (!token) {
     return Promise.reject(new Error('Unauthorized: No token provided. Please log in to obtain a valid token.'))
   }
-  
+
   const config = {
     headers: { Authorization: token }
   }
-  const response = await axios.post(baseUrl, newObject, config)  
-return response.data
+  const response = await axios.post(baseUrl, newObject, config)
+  return response.data
 }
 
 const update = (id, newObject) => {
