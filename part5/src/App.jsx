@@ -1,8 +1,11 @@
+import React from 'react'
 import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Notification from './components/Notification'
+import BlogForm from './components/BlogForm'
+import Togglable from './components/Togglable'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -15,11 +18,11 @@ const App = () => {
   const [message, setMessage] = useState('')
   const [error, setError] = useState(false)
 
-  useEffect(() => {
+  /*useEffect(() => {
     blogService.getAll().then(blogs =>
       setBlogs( blogs )
     )
-  }, [])
+  }, [])*/
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser')
@@ -27,6 +30,9 @@ const App = () => {
       const user = JSON.parse(loggedUserJSON)
       setUser(user)
       blogService.setToken(user.token)
+      blogService.getAll().then(blogs =>
+        setBlogs( blogs )
+      ) //we want see the blogs only if the user is logged in, so we moved the getAll() call inside the if statement
     }
   }, [])
 
@@ -56,6 +62,7 @@ const App = () => {
 const handleLogout = () => {
   window.localStorage.removeItem('loggedNoteappUser')
   setUser(null)
+  blogService.setToken(null)
 }
 
 const handleBlogSubmit = async (event) => {
@@ -77,6 +84,49 @@ const handleBlogSubmit = async (event) => {
     setTimeout(() => {
       setError(false)
     }, 5000)
+  }
+}
+
+const handleLike = async (id) => {
+  const blogToUpdate = blogs.find(blog => blog.id === id)
+    
+  const updatedBlog = { 
+    title: blogToUpdate.title,
+    author: blogToUpdate.author,
+    url: blogToUpdate.url,
+    likes: blogToUpdate.likes + 1, 
+    user: blogToUpdate.user?.id || blogToUpdate.user?._id || blogToUpdate.user 
+  }
+
+  try {
+    const returnedBlog = await blogService.update(id, updatedBlog)
+      setBlogs(blogs.map(blog => blog.id !== id ? blog : returnedBlog))
+    } catch (error) {
+      console.error('Error updating blog:', error)
+      setError(true)
+      setMessage(`Something went wrong: ${error}`)
+      setTimeout(() => setError(false), 5000)
+    }
+}
+
+const handleDelete = async (id) => {
+  const blogToDelete = blogs.find(blog => blog.id === id)
+
+  if (window.confirm(`Are you sure you want to delete ${blogToDelete.title} by ${blogToDelete.author}?`)) {
+    try {
+      await blogService.remove(id)
+      setBlogs(blogs.filter(blog => blog.id !== id))
+      setMessage(`${blogToDelete.title} by ${blogToDelete.author} deleted`)
+    } catch (error) {
+      console.error('Error deleting blog:', error)
+      setError(true)
+      setMessage(
+        `Something went wrong: ${error}`
+      )
+      setTimeout(() => {
+        setError(false)
+      }, 5000)
+    }
   }
 }
 
@@ -103,42 +153,40 @@ const loginForm = () => (
         </label>
       </div>
       <button type="submit">login</button>
-      <Notification message={message} setMessage={setMessage} error={error}/>
     </form>
-  )
-
-  const blogForm = () => (
-    <div>
-      <h2>Blogs</h2>
-      <Notification message={message} setMessage={setMessage} error={error}/>
-      <p>{user.name} logged in</p>
-      <button onClick={() => handleLogout()}>logout</button>
-      <form onSubmit={handleBlogSubmit}>
-        <h2>Create new</h2>
-        <label>
-          title:
-          <input value={title} onChange={({ target }) => setTitle(target.value)} />
-        </label>
-        <label>
-          author:
-          <input value={author} onChange={({ target }) => setAuthor(target.value)} />
-        </label>
-        <label>
-          url:
-          <input value={url} onChange={({ target }) => setUrl(target.value)}  />
-        </label>
-        <button type="submit">create</button>
-      </form>
-      {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
-      )}
-    </div>
   )
 
   return (
     <div>
+      <Notification message={message} setMessage={setMessage} error={error}/>
       {!user && loginForm()}
-      {user && blogForm()}
+      
+      {user && <><p>{user.name} logged in</p><button onClick={() => handleLogout()}>logout</button></>}
+      {user && <Togglable buttonLabel="create blog" hideLabel="cancel">
+        <h2>Blogs</h2>
+        <BlogForm
+          handleBlogSubmit={handleBlogSubmit}
+          title={title}
+          setTitle={setTitle}
+          author={author}
+          setAuthor={setAuthor}
+          url={url}
+          setUrl={setUrl}
+        />
+      </Togglable>
+      }
+      {user && blogs.sort((a, b) => a.likes - b.likes).map(blog =>
+        <React.Fragment key={blog.id}>
+          <Blog blog={blog} />
+          <Togglable buttonLabel="view" hideLabel="hide">
+            url: {blog.url} <br />
+            {blog.likes} likes <button onClick={() => handleLike(blog.id)}>like</button><br />
+            author: {blog.author} <br />
+            {(blog.user?.id === user.id || blog.user === user.id) &&
+            <button  onClick={() => handleDelete(blog.id)}>remove</button>}
+          </Togglable>
+        </React.Fragment>
+      )}
     </div>
   )
 }
